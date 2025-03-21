@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package search;
+
+// The search service definition
+service SearchService {
+  // Performs a Google search
+  rpc Search (SearchRequest) returns (SearchResponse) {}
+}
+
+// The request message containing the search query
+message SearchRequest {
+  string query = 1;
+}
+
+// A single search result
+message SearchResult {
+  string title = 1;
+  string link = 2;
+  string snippet = 3;
+}
+
+// The response message containing search results
+message SearchResponse {
+  repeated SearchResult results = 1;
+} 

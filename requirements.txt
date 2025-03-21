@@ -1,0 +1,5 @@
+playwright==1.41.2
+grpcio==1.62.0
+grpcio-tools==1.62.0
+protobuf==4.25.3
+asyncio==3.4.3 
