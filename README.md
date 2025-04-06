@@ -212,22 +212,22 @@ async def search(self, query: str, page: Page):
 We welcome contributions to expand the functionality of this Google scraper! Here are some planned features you can help with:
 
 ### Search Types
-[ ] Video search support - Add ability to scrape Google video search results
-[ ] News search support - Implement scraping of Google News results 
-[ ] Image search support - Add functionality to extract image search results
+- [ ] Video search support - Add ability to scrape Google video search results
+- [ ] News search support - Implement scraping of Google News results 
+- [ ] Image search support - Add functionality to extract image search results
 
 ### Search Filters
-[ ] Add support for Google search filters like:
-  [ ] Time range filters (past hour, day, week etc.)
-  [ ] Result type filters (videos, news, images etc.)
-  [ ] Language and region filters
-  [ ] Advanced search operators
+- [ ] Add support for Google search filters like:
+  - [ ] Time range filters (past hour, day, week etc.)
+  - [ ] Result type filters (videos, news, images etc.)
+  - [ ] Language and region filters
+  - [ ] Advanced search operators
 
 ### UI/UX Improvements
-[ ] Automated cookie popup handling
-  [ ] Detect and dismiss Google cookie consent popups
-  [ ] Handle different popup variations across regions
-  [ ] Make popup handling configurable
+- [ ] Automated cookie popup handling
+  - [ ] Detect and dismiss Google cookie consent popups
+  - [ ] Handle different popup variations across regions
+  - [ ] Make popup handling configurable
 
 Please feel free to:
 1. Pick any of these features to work on
