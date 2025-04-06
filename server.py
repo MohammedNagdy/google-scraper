@@ -4,14 +4,36 @@ import search_pb2
 import search_pb2_grpc
 from concurrent import futures
 from playwright.async_api import async_playwright
-from google_search import google_search
+from google_search import GoogleScraper
 
-class SearchService(search_pb2_grpc.SearchServiceServicer):
+
+class SearchServicer(search_pb2_grpc.SearchServiceServicer):
+    """
+    gRPC service implementation for handling search requests.
+    
+    This class implements the Search RPC defined in the search.proto file
+    and uses the GoogleScraper to perform searches and return results.
+    """
+    
+    def __init__(self):
+        """Initialize the search servicer with a GoogleScraper instance."""
+        self.scraper = GoogleScraper(timeout=60)
+    
     async def Search(self, request, context):
+        """
+        Handle search requests and return search results.
+        
+        Args:
+            request: gRPC SearchRequest containing the search query
+            context: gRPC context
+            
+        Returns:
+            search_pb2.SearchResponse: gRPC response containing search results
+        """
         try:
             async with async_playwright() as playwright:
                 browser = await playwright.chromium.launch(
-                    headless=True,  # Changed to headless mode
+                    headless=True,
                     args=[
                         "--disable-blink-features=AutomationControlled",
                         "--disable-dev-shm-usage",
@@ -21,34 +43,20 @@ class SearchService(search_pb2_grpc.SearchServiceServicer):
                         "--disable-gpu"
                     ]
                 )
-                context = await browser.new_context(
-                    viewport={"width": 1920, "height": 1080},
-                    user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-                    timezone_id="Europe/London",
-                    locale="en-US",
-                    permissions=["geolocation"],
-                    geolocation={"latitude": 51.5074, "longitude": -0.1278},  # London coordinates
-                )
                 
-                # Add extra headers to appear more like a real browser
-                await context.add_init_script("""
-                    Object.defineProperty(navigator, 'webdriver', {
-                        get: () => undefined
-                    });
-                """)
-                
-                page = await context.new_page()
+                browser_context = await self.scraper.setup_browser(browser)
+                page = await browser_context.new_page()
                 
                 try:
-                    # Perform the search with a longer timeout
+                    # Perform the search with a timeout
                     results = await asyncio.wait_for(
-                        google_search(request.query, page),
-                        timeout=60.0  # Increased timeout to 60 seconds
+                        self.scraper.search(request.query, page),
+                        timeout=self.scraper.timeout
                     )
-                    print("Results: " + str(results))
+                    print(f"Found {len(results)} results for query: {request.query}")
                 except asyncio.TimeoutError:
                     await browser.close()
-                    print("Timeout error")
+                    print("Search operation timed out")
                     return search_pb2.SearchResponse()
                 
                 await browser.close()
@@ -64,16 +72,52 @@ class SearchService(search_pb2_grpc.SearchServiceServicer):
                 return response
                 
         except Exception as e:
-            print("Error: " + str(e))
+            print(f"Error performing search: {str(e)}")
             return search_pb2.SearchResponse()
 
-async def serve():
-    server = grpc.aio.server(futures.ThreadPoolExecutor(max_workers=10))
-    search_pb2_grpc.add_SearchServiceServicer_to_server(SearchService(), server)
-    server.add_insecure_port('[::]:50051')
-    print("Starting server on port 50051...")
+
+class Server:
+    """
+    gRPC server for handling search requests.
+    
+    This class encapsulates the server configuration and startup logic.
+    """
+    
+    def __init__(self, address="[::]:50051", max_workers=10):
+        """
+        Initialize the server with address and worker configuration.
+        
+        Args:
+            address (str): Server address to listen on
+            max_workers (int): Maximum number of worker threads
+        """
+        self.address = address
+        self.max_workers = max_workers
+        self.server = None
+    
+    async def start(self):
+        """
+        Start the gRPC server.
+        
+        This method initializes the server, adds the search service,
+        and starts listening for requests.
+        """
+        self.server = grpc.aio.server(futures.ThreadPoolExecutor(max_workers=self.max_workers))
+        search_pb2_grpc.add_SearchServiceServicer_to_server(SearchServicer(), self.server)
+        self.server.add_insecure_port(self.address)
+        
+        print(f"Starting server on {self.address}...")
+        await self.server.start()
+        
+        print("Server started. Press Ctrl+C to stop.")
+        await self.server.wait_for_termination()
+
+
+async def main():
+    """Initialize and start the server."""
+    server = Server()
     await server.start()
-    await server.wait_for_termination()
+
 
 if __name__ == '__main__':
-    asyncio.run(serve()) 
+    asyncio.run(main()) 

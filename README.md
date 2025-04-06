@@ -1,88 +1,243 @@
 # Google Scraper
 
+A Google search automation tool with a client-server architecture using gRPC and Playwright.
+
 ## Overview
 
 The Google Scraper project is designed to perform automated Google searches and retrieve search results using gRPC and Playwright. It consists of a client-server architecture where the client sends search queries to the server, and the server processes these queries using Playwright to scrape Google search results.
 
-## Components
+## Features
 
-### 1. `client.py`
+- Automated Google search using Playwright
+- Client-server architecture with gRPC
+- Anti-detection measures to avoid being blocked
+- Structured search results with titles, links, and snippets
+- Configurable timeout and browser settings
+- Standalone search mode or client-server mode
 
-- **Purpose**: Acts as the client in the gRPC architecture. It sends search queries to the server and receives search results.
-- **Key Functions**:
-  - `run()`: Establishes a connection to the gRPC server and sends a search request. It handles the response and prints the search results.
+## Project Structure
 
-### 2. `server.py`
+The project follows an object-oriented design with the following components:
 
-- **Purpose**: Implements the gRPC server that processes search requests and returns search results.
-- **Key Classes**:
-  - `SearchService`: A gRPC service that handles search requests. It uses Playwright to perform Google searches and returns the results.
-- **Key Functions**:
-  - `serve()`: Starts the gRPC server and listens for incoming requests.
+### Core Components
 
-### 3. `google_search.py`
+- **GoogleScraper**: Class for performing Google searches and extracting results
+- **SearchClient**: Client for sending search requests and handling responses
+- **Server**: gRPC server implementation with configurable settings
+- **SearchServicer**: Implementation of the gRPC search service
 
-- **Purpose**: Contains the logic for performing Google searches using Playwright.
-- **Key Functions**:
-  - `google_search(query, page)`: Navigates to Google, performs a search, and extracts search results.
+### Files
 
-### 4. `generate_grpc.py`
-
-- **Purpose**: Generates Python code from the `search.proto` file using gRPC tools.
-- **Key Functions**:
-  - `protoc.main()`: Executes the gRPC tools to generate necessary Python files for gRPC communication.
-
-### 5. `main.py`
-
-- **Purpose**: A standalone script to test the Google search functionality using Playwright.
-- **Key Functions**:
-  - `run(playwright)`: Launches a browser and performs a Google search.
-  - `main()`: Entry point for running the script.
-
-### 6. `search.proto`
-
-- **Purpose**: Defines the gRPC service and messages for search requests and responses.
-- **Key Definitions**:
-  - `SearchService`: The gRPC service definition.
-  - `SearchRequest`: Message containing the search query.
-  - `SearchResponse`: Message containing the search results.
+| File | Description |
+|------|-------------|
+| `google_search.py` | Contains the `GoogleScraper` class for performing searches |
+| `server.py` | Implements the gRPC server and `SearchServicer` |
+| `client.py` | Implements the `SearchClient` class for interacting with the server |
+| `main.py` | Standalone search script for testing and demonstration |
+| `search.proto` | Protocol buffer definition for gRPC service |
+| `generate_grpc.py` | Utility to generate gRPC code from proto file |
+| `requirements.txt` | Python dependencies |
 
 ## Installation
 
-To set up the project, ensure you have Python installed and follow these steps:
+### Prerequisites
 
-1. Install the required packages:
+- Python 3.7+
+- pip (Python package manager)
+
+### Steps
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/google-scraper.git
+   cd google-scraper
+   ```
+
+2. Install the required packages:
    ```bash
    pip install -r requirements.txt
    ```
 
-2. Generate gRPC code:
+3. Install Playwright browsers:
+   ```bash
+   python -m playwright install chromium
+   ```
+
+4. Generate gRPC code:
    ```bash
    python generate_grpc.py
    ```
 
-3. Run the server:
+## Usage
+
+### Client-Server Mode
+
+This mode is useful when you want to separate the search functionality from your main application or when you need to distribute the load across multiple machines.
+
+1. Start the server:
    ```bash
    python server.py
    ```
 
-4. Run the client:
+2. In another terminal, run the client:
    ```bash
    python client.py
    ```
 
-## Usage
+   By default, the client will search for "python programming". You can modify the query in the `main()` function in `client.py`.
 
-- **Client**: Sends a search query and prints the results.
-- **Server**: Processes search requests and returns results using Playwright.
+### Standalone Mode
 
-## Dependencies
+For simple use cases, you can use the standalone mode:
 
-- `playwright`: For browser automation.
-- `grpcio` and `grpcio-tools`: For gRPC communication.
-- `protobuf`: For protocol buffer support.
+```bash
+python main.py
+```
 
-## Notes
+This will run a search using the `GoogleScraper` directly, without the need for a server.
 
-- Ensure that Playwright is properly installed and set up on your system.
-- The server must be running before the client can send requests.
+### Custom Usage
+
+You can also import and use the components in your own Python code:
+
+```python
+import asyncio
+from playwright.async_api import async_playwright
+from google_search import GoogleScraper
+
+async def custom_search():
+    async with async_playwright() as playwright:
+        scraper = GoogleScraper()
+        browser = await playwright.chromium.launch()
+        context = await scraper.setup_browser(browser)
+        page = await context.new_page()
+        
+        try:
+            results = await scraper.search("your search query", page)
+            for result in results:
+                print(f"Title: {result['title']}")
+                print(f"Link: {result['link']}")
+                print(f"Snippet: {result['snippet']}")
+        finally:
+            await browser.close()
+
+# Run the custom search
+asyncio.run(custom_search())
+```
+
+For client-server usage in your own code:
+
+```python
+import asyncio
+from client import SearchClient
+
+async def custom_client():
+    client = SearchClient()
+    await client.connect()
+    
+    try:
+        results = await client.search("your search query")
+        for result in results:
+            print(f"Title: {result['title']}")
+            print(f"Link: {result['link']}")
+            print(f"Snippet: {result['snippet']}")
+    finally:
+        await client.close()
+
+# Run the custom client
+asyncio.run(custom_client())
+```
+
+## Configuration
+
+### Server Configuration
+
+You can configure the server address and the number of worker threads:
+
+```python
+from server import Server
+import asyncio
+
+async def custom_server():
+    server = Server(address="0.0.0.0:50051", max_workers=20)
+    await server.start()
+
+asyncio.run(custom_server())
+```
+
+### Scraper Configuration
+
+You can configure the timeout for search operations:
+
+```python
+from google_search import GoogleScraper
+
+# Create a scraper with a 30-second timeout
+scraper = GoogleScraper(timeout=30)
+```
+
+## Anti-Detection Measures
+
+The `GoogleScraper` includes several measures to avoid detection:
+
+- Custom user agent
+- Disabling automation flags
+- Simulating human-like behavior with delays
+- Custom browser viewport and geolocation
+- Disabling WebDriver flags
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Connection refused**: Make sure the server is running before starting the client.
+2. **No results returned**: Google might be blocking the requests. Try adjusting the anti-detection settings.
+3. **Timeout errors**: Increase the timeout value in the `GoogleScraper` constructor.
+
+### Debugging
+
+Enable more verbose output by adding print statements in the relevant methods:
+
+```python
+# In google_search.py
+async def search(self, query: str, page: Page):
+    print(f"Navigating to Google...")
+    await page.goto("https://www.google.com")
+    print(f"Entering search query: {query}")
+    # ...
+```
+
+## Contributions are welcomed
+
+We welcome contributions to expand the functionality of this Google scraper! Here are some planned features you can help with:
+
+### Search Types
+- Video search support - Add ability to scrape Google video search results
+- News search support - Implement scraping of Google News results 
+- Image search support - Add functionality to extract image search results
+
+### Search Filters
+- Add support for Google search filters like:
+  - Time range filters (past hour, day, week etc.)
+  - Result type filters (videos, news, images etc.)
+  - Language and region filters
+  - Advanced search operators
+
+### UI/UX Improvements
+- Automated cookie popup handling
+  - Detect and dismiss Google cookie consent popups
+  - Handle different popup variations across regions
+  - Make popup handling configurable
+
+Please feel free to:
+1. Pick any of these features to work on
+2. Submit bug fixes and improvements
+3. Add documentation and examples
+4. Suggest new features
+
+Make sure to read our contribution guidelines before submitting PRs.
+
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
