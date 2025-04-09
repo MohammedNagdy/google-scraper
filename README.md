@@ -207,6 +207,7 @@ async def search(self, query: str, page: Page):
     # ...
 ```
 
+
 ## Contributions are welcomed
 
 We welcome contributions to expand the functionality of this Google scraper! Here are some planned features you can help with:
@@ -235,7 +236,36 @@ Please feel free to:
 3. Add documentation and examples
 4. Suggest new features
 
-Make sure to read our contribution guidelines before submitting PRs.
+Make sure to read our contribution guidelines below before submitting PRs.
+
+### Guidelines
+
+#### Creating Issues
+
+1. Check existing issues to avoid duplicates
+2. Use descriptive titles that summarize the problem/feature
+3. For bug reports, include:
+   - Steps to reproduce
+   - Expected behavior
+   - Actual behavior
+   - Error messages if any
+   - Environment details (OS, Python version, etc.)
+4. For feature requests, include:
+   - Clear description of the proposed feature
+   - Use cases and benefits
+   - Any implementation ideas (optional)
+
+#### Pull Requests
+
+1. Create an issue first and discuss the changes
+2. Fork the repository and create a branch for your feature
+3. Follow the existing code style and conventions
+4. Include tests for new functionality
+5. Update documentation as needed
+6. Keep PRs focused - one feature/fix per PR
+7. Ensure all tests pass before submitting
+8. Reference the related issue in your PR description
+9. Be responsive to code review feedback
 
 
 ## License
